@@ -15,6 +15,12 @@ COPY ./requirements.txt ./tmp/requirements.txt
 
 RUN pip3 install -r tmp/requirements.txt
 
-CMD python3 --version
+COPY ./ ./app
+
+WORKDIR app
+
+RUN git clone https://github.com/maksimhorowitz/nflscrapR.git nflscrapr
+
+ENTRYPOINT bash entrypoint.sh
 
 
