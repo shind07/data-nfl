@@ -15,12 +15,12 @@ COPY ./requirements.txt ./tmp/requirements.txt
 
 RUN pip3 install -r tmp/requirements.txt
 
+# RUN git clone https://github.com/maksimhorowitz/nflscrapR.git nflscrapr
+
 COPY ./ ./app
 
 WORKDIR app
 
-RUN git clone https://github.com/maksimhorowitz/nflscrapR.git nflscrapr
+CMD python3 jobs/play_by_play.py
 
-ENTRYPOINT bash entrypoint.sh
-
-
+# ENTRYPOINT bash entrypoint.sh

@@ -6,4 +6,4 @@ build:
 
 run: build
 	echo "running $(APP_NAME) container..."
-	docker run -it --env-file .env $(APP_NAME)
+	docker run -it --env-file .env -v ${PWD}/data:/app/data $(APP_NAME)
