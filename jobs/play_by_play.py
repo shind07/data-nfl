@@ -3,6 +3,9 @@ import logging
 
 import pandas as pd 
 
+logging.basicConfig(level=logging.INFO, format='{%(filename)s:%(lineno)d} %(levelname)s - %(message)s')
+
+
 DATA_URL = 'https://raw.githubusercontent.com/ryurko/nflscrapR-data/master/play_by_play_data/{season_type}_season/{season_abbrev}_pbp_{season}.csv'
 SEASON_TYPES = ['pre', 'regular', 'post']
 CSV_PREFIXES= ['pre', 'reg', 'post']
@@ -26,7 +29,7 @@ def fetch_latest_season(data='play_by_play'):
 
 
 def extract(season):
-
+    logging.info(f'extracting data for {season} season...')
     full_data = None
 
     for season_type, prefix in zip(SEASON_TYPES, CSV_PREFIXES):
@@ -50,6 +53,10 @@ def extract(season):
     
     return full_data
 
+def load(data):
+    logging.info('loading data....')
+    data.to_csv(os.path.join(DATA_DIR, PLAY_BY_PLAY_CSV))
+
 
 def main():
     most_recent_season = fetch_latest_season()
@@ -61,13 +68,9 @@ def main():
         return
 
     seasons_to_extract = range(most_recent_season)
-
     data = extract(2018)
-    print(data.head())
-    print(data.columns)
-    print(data.info())
+    load(data)
 
-    data.to_csv(os.path.join(DATA_DIR, PLAY_BY_PLAY_CSV))
 
 if __name__ == '__main__':
     main()
