@@ -3,7 +3,6 @@ FROM ubuntu:18.04
 ENV DEBIAN_FRONTEND=noninteractive 
 
 RUN apt-get update && \
-    apt-get upgrade -y && \
     apt-get install -y  \
         python3 \ 
         python3-pip \
@@ -11,13 +10,13 @@ RUN apt-get update && \
         r-base && \
     apt-get clean
 
-COPY ./requirements.txt ./tmp/requirements.txt
+COPY requirements.txt /tmp/requirements.txt
 
 RUN pip3 install -r tmp/requirements.txt
 
 # RUN git clone https://github.com/maksimhorowitz/nflscrapR.git nflscrapr
 
-COPY ./ ./app
+COPY . /app
 
 WORKDIR app
 
