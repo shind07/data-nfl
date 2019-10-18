@@ -13,13 +13,13 @@ RUN R -e "install.packages('devtools', repos='http://cran.us.r-project.org')"
 
 # need to install this package separately b/c the install w/ nflscrapR fails.
 RUN R -e "install.packages('hashmap', repos='http://cran.us.r-project.org')"
-
 RUN R -e "devtools::install_github(repo='maksimhorowitz/nflscrapR')"
+RUN R -e "install.packages('optparse')"
 
-# everything above here is cached :) 
+COPY /scripts /app/scripts
+COPY docker-entrypoint.sh /usr/local/bin
 
-COPY scripts tmp/scripts
+WORKDIR app
 
-WORKDIR tmp/scripts
-
-CMD Rscript play_by_play.r
+#CMD ls 
+ENTRYPOINT [ "bash", "docker-entrypoint.sh" ]
