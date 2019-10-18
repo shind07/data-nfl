@@ -3,8 +3,12 @@ library(nflscrapR)
 #> Loading required package: nnet
 #> Loading required package: magrittr
 
-week_2_games <- scrape_game_ids(2018, weeks = 2)
+args <- commandArgs(trailingOnly=TRUE)
 
+print(args)
+# week_2_games <- scrape_game_ids(2018, weeks = 2)
+
+# print(head(week_2_games, 10))
 
 # library(nflscrapR)
 
