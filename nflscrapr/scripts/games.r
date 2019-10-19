@@ -1,13 +1,15 @@
-library("nflscrapR")
-library("optparse")
+suppressMessages(library("nflscrapR"))
+suppressMessages(library("optparse"))
 
 
 main <- function() {
     # Argument parsing
     option_list <- list(
-        make_option(c("-y", "--year"), type="character", default=NULL, 
+        make_option(c("-y", "--year"), type="character", default=2019, 
                 help="season year", metavar="character"),
         make_option(c("-w", "--week"), type="character", default=NULL, 
+                help="week of games", metavar="character"),
+        make_option(c("-t", "--type"), type="character", default="reg", 
                 help="week of games", metavar="character")
     ); 
     opt_parser <- OptionParser(option_list=option_list);
@@ -17,21 +19,30 @@ main <- function() {
         stop("year argument not supplied.")
     }
 
-    if (is.null(args$week)) {
-        stop("week argument not supplied.")
-    }
+    # if (is.null(args$week)) {
+    #     stop("week argument not supplied.")
+    # }
 
     year <- args$year
-    week <- args$week
+    #week <- args$week
+    game_type <- args$type
 
-    if (typeof(week) != "integer") {
-        week <- as.integer(week)
-    }
+    # if (typeof(week) != "integer") {
+    #     week <- as.integer(week)
+    # }
 
     # Get games for week
-    games <- scrape_game_ids(year, weeks=week)
+    games <- scrape_game_ids(year)
     csv_name <- "/app/data/games.csv"
-    write.table(games, sep=",", file=csv_name, col.names = !file.exists(csv_name), row.names=FALSE, append=TRUE)
+
+    # if (file.exists(csv_name)) {
+    #     append_mode <- TRUE
+    # }
+    # else {
+    #     append_mode <- FALSE
+    # }
+
+    write.table(games, sep=",", file=csv_name, col.names=!file.exists(csv_name), row.names=FALSE, append=file.exists(csv_name))
 
 }
 

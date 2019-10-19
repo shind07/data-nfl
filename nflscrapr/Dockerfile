@@ -19,7 +19,6 @@ RUN R -e "install.packages('optparse')"
 COPY /scripts /app/scripts
 COPY docker-entrypoint.sh /usr/local/bin
 
-WORKDIR app
+WORKDIR /app
 
-#CMD ls 
 ENTRYPOINT [ "bash", "docker-entrypoint.sh" ]

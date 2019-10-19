@@ -18,7 +18,7 @@ RUN pip3 install -r tmp/requirements.txt
 
 COPY . /app
 
-WORKDIR app
+WORKDIR /app
 
 CMD python3 jobs/play_by_play.py
 

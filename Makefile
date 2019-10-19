@@ -14,10 +14,10 @@ build:
 
 .PHONY: run-nflscrapr
 run-nflscrapr: build-nflscrapr
-	docker run -v ${PWD}/data:/app/data  $(NFLSCRAPR_APP_NAME)
+	docker run -v ${PWD}/data:/app/data $(NFLSCRAPR_APP_NAME) games --year=2019 --type=reg
 
 
 .PHONY: run
 run: build
 	echo "running $(APP_NAME) container..."
-	docker run -it --env-file .env -v ${PWD}/data:/app/data $(APP_NAME)
+	docker run -it --env-file .env -v ${PWD}/data:/app/data $(APP_NAME) 
