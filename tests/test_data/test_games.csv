@@ -1,0 +1,16 @@
+type,game_id,home_team,away_team,week,season,state_of_game,game_url,home_score,away_score
+pre,2011081152,NE,JAC,1,2013,POST,http://www.nfl.com/liveupdate/game-center/2013081152/2013081152_gtd.json,47,12
+reg,2013102309,MIN,GB,7,2013,POST,http://www.nfl.com/liveupdate/game-center/2013102309/2013102309_gtd.json,27,33
+reg,2013102310,DAL,STL,7,2013,POST,http://www.nfl.com/liveupdate/game-center/2013102310/2013102310_gtd.json,34,7
+post,2013010700,HOU,CIN,18,2013,POST,http://www.nfl.com/liveupdate/game-center/2013010700/2013010700_gtd.json,31,10
+post,2013010701,NO,DET,18,2013,POST,http://www.nfl.com/liveupdate/game-center/2013010701/2013010701_gtd.json,45,28
+pre,2012081152,NE,JAC,1,2012,POST,http://www.nfl.com/liveupdate/game-center/2012081152/2012081152_gtd.json,47,12
+reg,2012102309,MIN,GB,7,2012,POST,http://www.nfl.com/liveupdate/game-center/2012102309/2012102309_gtd.json,27,33
+reg,2011102310,DAL,STL,7,2011,POST,http://www.nfl.com/liveupdate/game-center/2011102310/2011102310_gtd.json,34,7
+post,2012010700,HOU,CIN,18,2012,POST,http://www.nfl.com/liveupdate/game-center/2012010700/2012010700_gtd.json,31,10
+post,2012010701,NO,DET,18,2012,POST,http://www.nfl.com/liveupdate/game-center/2012010701/2012010701_gtd.json,45,28
+pre,2011081152,NE,JAC,1,2011,POST,http://www.nfl.com/liveupdate/game-center/2011081152/2011081152_gtd.json,47,12
+reg,2011102309,MIN,GB,7,2011,POST,http://www.nfl.com/liveupdate/game-center/2011102309/2011102309_gtd.json,27,33
+reg,2011102310,DAL,STL,7,2011,POST,http://www.nfl.com/liveupdate/game-center/2011102310/2011102310_gtd.json,34,7
+post,2011010700,HOU,CIN,18,2011,POST,http://www.nfl.com/liveupdate/game-center/2011010700/2011010700_gtd.json,31,10
+post,2011010701,NO,DET,18,2011,POST,http://www.nfl.com/liveupdate/game-center/2011010701/2011010701_gtd.json,45,28
