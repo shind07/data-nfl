@@ -15,6 +15,7 @@ TODO:
     - start with dockerhub, then ECR
 - set up travisCI
 - put nflscrapr in its own repo
+- containerize everything
 """
 import os
 import logging
@@ -83,17 +84,17 @@ def data_integrity_check(df):
             raise DataIntegrityError(f"{season} is not the max season of {max_season} and only has {len(season_types)} season types")
 
         elif len(season_types) == 1 and season_types != {'pre'}:
-            raise DataIntegrityError(f"There is only 1 season type: {season_types} and its not 'pre'!")
+            raise DataIntegrityError(f"There is only 1 season type for {seasons}: {season_types} and its not 'pre'!")
 
         elif len(season_types) == 2 and season_types != {'pre', 'reg'}:
             raise DataIntegrityError(f"There are 2 season types for {season} and they're not ['pre', 'reg']!")
 
-        else:
+        elif 'reg' in df[df['season'] == season]['type'].unique():
             reg_season_df = df[(df['season'] == season) & (df['type'] == 'reg')]
             weeks = reg_season_df['week'].unique()
             target_weeks = set(range(1, 18))
-            missing_weeks = set(weeks).difference(target_weeks)
-            if len(missing_weeks > 0):
+            missing_weeks = target_weeks.difference(set(weeks))
+            if len(missing_weeks) > 0:
                 raise DataIntegrityError(f"{season} reg season is missing weeks {missing_weeks}!")
             
 
@@ -179,13 +180,13 @@ def get_next_season_and_type(season, season_type, order='next'):
     if season_type not in config.SEASON_TYPES:
         raise ValueError(f"Start season type {season_type} not valid.")
     
-    if (season, season_type) == (config.CURRENT_SEASON, 'post'):
+    if order == 'next' and (season, season_type) == (config.CURRENT_SEASON, 'post'):
         return None
     
-    if (season, season_type) == (config.START_SEASON, 'pre'):
-        return (config.START_SEASON, 'reg')
+    if order == 'prev' and (season, season_type) == (config.START_SEASON, 'pre'):
+        return None
 
-    grid = get_seasons_grid(config.START_SEASON, config.CURRENT_SEASON)
+    grid = get_seasons_grid(config.START_SEASON, 'pre')
 
     for index, (season_and_type) in enumerate(grid):
         if (season, season_type) == season_and_type:
