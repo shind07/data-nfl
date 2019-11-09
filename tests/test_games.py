@@ -149,5 +149,28 @@ class TestGames(unittest.TestCase):
         self.assertEqual(len(seasons), expected_number_of_seasons)
         self.assertEqual(len(grid), expected_number_of_seasons*len(config.SEASON_TYPES))
 
+    def test_truncate(self):
+        
+        df = self.test_df[self.test_df['season'].isin([2011, 2012, 2013])]
+        latest_season_and_type = games.get_latest_season_and_type(df)
+        self.assertEqual(latest_season_and_type, (2013, 'post'))
+        games.data_integrity_check(df)
+
+        df = games.truncate(df, *latest_season_and_type)
+        latest_season_and_type = games.get_latest_season_and_type(df)
+        self.assertEqual(latest_season_and_type, (2013, 'reg'))
+        games.data_integrity_check(df)
+
+        df = games.truncate(df, *latest_season_and_type)
+        latest_season_and_type = games.get_latest_season_and_type(df)
+        self.assertEqual(latest_season_and_type, (2013, 'pre'))
+        games.data_integrity_check(df)
+
+        df = games.truncate(df, *latest_season_and_type)
+        latest_season_and_type = games.get_latest_season_and_type(df)
+        self.assertEqual(latest_season_and_type, (2012, 'post'))
+        games.data_integrity_check(df)
+        
+
 if __name__ == '__main__':
     unittest.main()
