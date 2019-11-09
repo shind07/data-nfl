@@ -14,7 +14,7 @@ build:
 
 .PHONY: run-nflscrapr
 run-nflscrapr: build-nflscrapr
-	docker run -v ${PWD}/data:/app/data $(NFLSCRAPR_APP_NAME) games --year=2019 --type=reg
+	docker run -v ${PWD}/data:/app/data $(NFLSCRAPR_APP_NAME) games --year=2014 --type=reg
 
 
 .PHONY: run
@@ -25,3 +25,10 @@ run: build
 .PHONY: test
 test:
 	python3 -m unittest discover tests
+
+
+.PHONY: run-pipeline
+run-pipeline: build build-nflscrapr
+	python3 pipeline.py
+
+	
