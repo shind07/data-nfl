@@ -22,7 +22,7 @@ import logging
 
 import docker
 import numpy as np
-import pandas as pd 
+import pandas as pd
 
 from . import config
 
@@ -31,7 +31,7 @@ logging.basicConfig(level=logging.INFO, format='{%(filename)s:%(lineno)d} %(leve
 
 def extract_current_data():
     """Loads games csv into a dataframe.
-    
+
     :return: dataframe if file exists, else None
     :rtype: pandas.DataFrame
     """
@@ -46,7 +46,7 @@ def extract_current_data():
 
 
 class DataIntegrityError(Exception):
-     pass 
+    pass
 
 
 def data_integrity_check(df):
@@ -75,16 +75,19 @@ def data_integrity_check(df):
 
     if set(seasons) != expected_seasons:
         missing_season = expected_seasons - set(seasons)
-        raise DataIntegrityError(f"Most recent season with data is {max_season} but there's no data for {missing_season}!")
+        raise DataIntegrityError(f"Most recent season with data is {max_season}"
+                                 f" but there's no data for {missing_season}!")
 
     for season in list(seasons):
         season_types = set(df[df['season'] == season]['type'].unique())
 
         if season != max_season and len(season_types) != 3:
-            raise DataIntegrityError(f"{season} is not the max season of {max_season} and only has {len(season_types)} season types")
+            raise DataIntegrityError(f"{season} is not the max season of {max_season}"
+                                     f"and only has {len(season_types)} season types")
 
         elif len(season_types) == 1 and season_types != {'pre'}:
-            raise DataIntegrityError(f"There is only 1 season type for {seasons}: {season_types} and its not 'pre'!")
+            raise DataIntegrityError(f"There is only 1 season type for {seasons}: {season_types}"
+                                     f"and its not 'pre'!")
 
         elif len(season_types) == 2 and season_types != {'pre', 'reg'}:
             raise DataIntegrityError(f"There are 2 season types for {season} and they're not ['pre', 'reg']!")
@@ -96,11 +99,11 @@ def data_integrity_check(df):
             missing_weeks = target_weeks.difference(set(weeks))
             if len(missing_weeks) > 0:
                 raise DataIntegrityError(f"{season} reg season is missing weeks {missing_weeks}!")
-            
+
 
 def get_latest_season_and_type(df):
     """Gets the latest season and season type in the games data
-    
+
     :param df: games data
     :type df: pandas.DataFrame
     :return: tuple of (latest_season, latest_season_type)
@@ -121,7 +124,7 @@ def get_latest_season_and_type(df):
 
 def get_latest_season_type(season_types_list):
     """Uses the semantic ordering of season types to get the latest/max
-    
+
     :param season_types_list: list of season types - set or subset of (pre, reg, post)
     :type season_types_list: list or tuple
     :raises ValueError: if season_types_list is not a list or tupe
@@ -142,7 +145,7 @@ def get_latest_season_type(season_types_list):
 
 def truncate(df, season, season_type):
     """Removes the latest season and season type from df.
-    
+
     :param df: dataframe of games data
     :type df: pandas.DataFrame
     :param season: last season of data
@@ -157,7 +160,7 @@ def truncate(df, season, season_type):
 
 def get_next_season_and_type(season, season_type, order='next'):
     """The next or previous season and type
-    
+
     :param season: year of season
     :type season: int
     :param season_type: type of season (pre, reg, post)
@@ -173,16 +176,17 @@ def get_next_season_and_type(season, season_type, order='next'):
 
     if not isinstance(season, (np.int64, int)):
         raise ValueError(f"Season is type {type(season)}, it should be type 'int'.")
-        
+
     if season < config.START_SEASON or season > config.CURRENT_SEASON:
-        raise ValueError(f"Invalid season: {season}, must be in >= {config.START_SEASON} and <= {config.CURRENT_SEASON} ")
+        raise ValueError(f"Invalid season: {season}, must be in >= {config.START_SEASON} and"
+                         f"<= {config.CURRENT_SEASON} ")
 
     if season_type not in config.SEASON_TYPES:
         raise ValueError(f"Start season type {season_type} not valid.")
-    
+
     if order == 'next' and (season, season_type) == (config.CURRENT_SEASON, 'post'):
         return None
-    
+
     if order == 'prev' and (season, season_type) == (config.START_SEASON, 'pre'):
         return None
 
@@ -198,7 +202,7 @@ def get_next_season_and_type(season, season_type, order='next'):
 
 def get_seasons_grid(start_season, start_season_type):
     """Enumerates all combos of season and season types
-    
+
     :param start_season: year of season to start the grid
     :type start_season: int
     :param start_season_type: type of season to start the grid (pre, reg, post)
@@ -208,11 +212,14 @@ def get_seasons_grid(start_season, start_season_type):
     """
     if start_season not in list(range(config.START_SEASON, config.CURRENT_SEASON+1)):
         raise ValueError(f"Start season of {start_season} not valid.")
-    
+
     if start_season_type not in config.SEASON_TYPES:
         raise ValueError(f"Start season type {start_season_type} not valid.")
-    
-    initial_season_types = [s for s in config.SEASON_TYPES if config.SEASON_TYPES_ORDER[s] >= config.SEASON_TYPES_ORDER[start_season_type] ]
+
+    initial_season_types = [
+        s for s in config.SEASON_TYPES
+        if config.SEASON_TYPES_ORDER[s] >= config.SEASON_TYPES_ORDER[start_season_type]
+    ]
     grid = [(start_season, season_type) for season_type in initial_season_types]
 
     if start_season < config.CURRENT_SEASON:
@@ -224,7 +231,7 @@ def get_seasons_grid(start_season, start_season_type):
 
 def extract_game_data(season, season_type):
     """Runs the nflscrapr docker container for the given season and type
-    
+
     :param season: year of season
     :type season: int
     :param season_type: type of season (pre, reg, post)
@@ -232,7 +239,7 @@ def extract_game_data(season, season_type):
     :return: the output of the call to nflscrapr as a dataframe
     :rtype: pandas.DataFrame
     """
-    docker_command = f"games --year={season} --type={season_type}" 
+    docker_command = f"games --year={season} --type={season_type}"
     run_docker_container(
         config.DOCKER_CONTAINER,
         docker_command,
@@ -243,7 +250,7 @@ def extract_game_data(season, season_type):
 
 def run_docker_container(container, command=None, **kwargs):
     """Runs the given docker container
-    
+
     :param container: name of docker container
     :type container: str
     :param command: command to run in docker conatainer, defaults to None
@@ -251,7 +258,7 @@ def run_docker_container(container, command=None, **kwargs):
     """
     logging.info(f"Running docker container {container} with CMD {command}...")
     client = docker.from_env()
-    
+
     if command:
         kwargs = {"command": command, **kwargs}
     try:
@@ -268,7 +275,7 @@ def run_docker_container(container, command=None, **kwargs):
 
 def extract_dumped_data():
     """Loads the data that was dumped from the docker container run
-    
+
     :return: pandas dataframe
     :rtype: pandas.DataFrame
     """
@@ -280,7 +287,7 @@ def extract_dumped_data():
 
 def load_to_csv(df):
     """Loads the dataframe into a csv.
-    
+
     :param df: dataframe of games data
     :type df: pandas.DataFrame
     """
@@ -288,7 +295,7 @@ def load_to_csv(df):
         raise ValueError(f"Type of df is {type(df)}, it should be pandas.DataFrame")
 
     if not os.path.exists(config.GAMES_CSV_PATH):
-        df.to_csv(config.GAMES_CSV_PATH, index=False) 
+        df.to_csv(config.GAMES_CSV_PATH, index=False)
     else:
         current_df = extract_current_data()
         updated_df = pd.concat([current_df, df])
@@ -305,8 +312,8 @@ def run():
     """
     games_data = extract_current_data()
     data_integrity_check(games_data)
-    
-    latest_season, latest_season_type = get_latest_season_and_type(games_data) 
+
+    latest_season, latest_season_type = get_latest_season_and_type(games_data)
 
     logging.info(f"Latest season and type in current data: {(latest_season, latest_season_type)}")
 
@@ -316,13 +323,13 @@ def run():
     else:
         games_data = truncate(games_data, latest_season, latest_season_type)
         batch_start_season, batch_start_type = latest_season, latest_season_type
-    
+
     logging.info(f"Starting batch at {(batch_start_season, batch_start_type)}...")
-    
+
     batches = get_seasons_grid(batch_start_season, batch_start_type)
 
     for batch in batches:
-        season, season_type = batch 
+        season, season_type = batch
         logging.info(f"Extracting data for {season}-{season_type}...")
         data = extract_game_data(season, season_type)
         data_integrity_check(pd.concat([games_data, data]))

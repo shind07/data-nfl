@@ -1,7 +1,6 @@
 import logging
 import os
 import unittest
-from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
@@ -9,6 +8,7 @@ from jobs import games, config
 
 logger = logging.getLogger('test_logger')
 logger.setLevel(logging.DEBUG)
+
 
 class TestGames(unittest.TestCase):
 
@@ -20,7 +20,7 @@ class TestGames(unittest.TestCase):
             'test_data/test_games.csv'
         )
         cls.test_df = pd.read_csv(cls.test_games_path)
-    
+
     def test_data_integrity_check(self):
         """
         4 conditions must be met:
@@ -53,14 +53,18 @@ class TestGames(unittest.TestCase):
             self.test_df[(self.test_df['season'] != 2011) | (self.test_df['type'].isin(['reg', 'post']))],
             self.test_df[(self.test_df['season'] == 2011) & (~self.test_df['type'].isin(['reg', 'pre']))],
             self.test_df[self.test_df['season'] != 2012],
-            self.test_df[(self.test_df['season'] == 2011) & (self.test_df['type'].isin(['reg', 'pre'])) & (self.test_df['week'] != 2)]
+            self.test_df[
+                (self.test_df['season'] == 2011) &
+                (self.test_df['type'].isin(['reg', 'pre'])) &
+                (self.test_df['week'] != 2)
+            ]
         ]
 
         for bad_df in bad_dfs:
             with self.assertRaises(games.DataIntegrityError) as cm:
                 games.data_integrity_check(bad_df)
             logger.debug(cm.exception)
-            
+
     def test_get_latest_season_type(self):
         """Test that the function preserves semantic ordering"""
         with self.assertRaises(ValueError) as cm:
@@ -86,7 +90,7 @@ class TestGames(unittest.TestCase):
         results = []
         for season_type in config.SEASON_TYPES:
             results.append(games.get_next_season_and_type(2011, season_type))
-        
+
         self.assertEqual(results[0], (2011, 'reg'))
         self.assertEqual(results[1], (2011, 'post'))
         self.assertEqual(results[2], (2012, 'pre'))
@@ -150,7 +154,7 @@ class TestGames(unittest.TestCase):
         self.assertEqual(len(grid), expected_number_of_seasons*len(config.SEASON_TYPES))
 
     def test_truncate(self):
-        
+
         df = self.test_df[self.test_df['season'].isin([2011, 2012, 2013])]
         latest_season_and_type = games.get_latest_season_and_type(df)
         self.assertEqual(latest_season_and_type, (2013, 'post'))
@@ -170,7 +174,7 @@ class TestGames(unittest.TestCase):
         latest_season_and_type = games.get_latest_season_and_type(df)
         self.assertEqual(latest_season_and_type, (2012, 'post'))
         games.data_integrity_check(df)
-        
+
 
 if __name__ == '__main__':
     unittest.main()

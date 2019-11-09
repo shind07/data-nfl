@@ -11,6 +11,9 @@ build:
 	echo "building container for $(APP_NAME)..."
 	docker build -t $(APP_NAME) .
 
+.PHONE: lint
+lint:
+	flake8
 
 .PHONY: run-nflscrapr
 run-nflscrapr: build-nflscrapr
