@@ -140,19 +140,19 @@ def get_latest_season_type(season_types_list):
     return latest_season_type
 
 
-def truncate(df, latest_season, latest_season_type):
+def truncate(df, season, season_type):
     """Removes the latest season and season type from df.
     
     :param df: dataframe of games data
     :type df: pandas.DataFrame
-    :param latest_season: last season of data
-    :type latest_season: int
-    :param latest_season_type: type of the latest season
-    :type latest_season_type: str
+    :param season: last season of data
+    :type season: int
+    :param season_type: type of the latest season
+    :type season_type: str
     :return: truncated dataframe
     :rtype: pandas.DataFrame
     """
-    return df[(df['season'] != latest_season) & (df['type'] != latest_season_type)]
+    return df[(df['season'] != season) | (df['type'] != season_type)]
 
 
 def get_next_season_and_type(season, season_type, order='next'):
@@ -325,4 +325,6 @@ def run():
         season, season_type = batch 
         logging.info(f"Extracting data for {season}-{season_type}...")
         data = extract_game_data(season, season_type)
+        data_integrity_check(pd.concat([games_data, data]))
+        logging.info(f"Integrity check passed, loading new data.")
         load_to_csv(data)
