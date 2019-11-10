@@ -9,11 +9,12 @@ NOTE:
 - need to check if season is full
 
 TODO:
-- complete tests
-- set up linter
+- complete tests (done)
+- set up linter (done)
+- set up travisCI
 - set up cloud container repo
     - start with dockerhub, then ECR
-- set up travisCI
+    - update travisCI
 - put nflscrapr in its own repo
 - containerize everything
 """
