@@ -1,12 +1,14 @@
-IMAGE_NAME:=scottyhind/data-nfl-pipeline
+IMAGE_NAME=scottyhind/data-nfl-pipeline
 IMAGE_TAG:=$(shell git rev-parse HEAD)
 RUNNING_CONTAINER_NAME=data-nfl-pipeline-live
 
 .PHONY: build
 build:
 	@echo building $(IMAGE_TAG) image...
-	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
-	docker tag $(IMAGE_NAME):$(IMAGE_TAG) $(IMAGE_NAME):latest
+	docker build \
+		--cache-from $(IMAGE_NAME):build-cache \
+		-t $(IMAGE_NAME):$(IMAGE_TAG) \
+		-t $(IMAGE_NAME):latest .
 
 .PHONY: lint
 lint:
@@ -26,6 +28,10 @@ run-pipeline:
 		-v $$(PWD)/data:/app/data \
 		$(IMAGE_NAME) python3 pipeline.py
 
+.PHONY: pull
+pull-cache:
+	docker pull $(IMAGE_NAME):build-cache
+
 .PHONY: shell
 shell:
 	docker run -d --name $(RUNNING_CONTAINER_NAME) $(IMAGE_NAME)
@@ -34,7 +40,7 @@ shell:
 	docker rm $(RUNNING_CONTAINER_NAME)
 
 .PHONY: test
-test:
+test: build
 	@echo testing...
 	docker run $(IMAGE_NAME) python3 -m unittest discover tests
 
