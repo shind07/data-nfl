@@ -1,13 +1,16 @@
 language: python
 python:
-  - "3.6"
+  - 3.6
+sudo: required
 services:
   - docker
 before_install:
   - make build
 jobs:
   include:
-  - if: type = pull_request AND branch != master
-  - script: make lint test
-  - if: type != pull_request and branch = master
-  - script: make push
+  - stage: check
+    if: type = pull_request AND branch != master
+    script: make lint test
+  - stage: deploy  
+    if: type != pull_request and branch = master
+    script: make push
