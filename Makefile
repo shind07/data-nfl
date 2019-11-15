@@ -7,8 +7,9 @@ build:
 	@echo building $(IMAGE_TAG) image...
 	docker build \
 		--cache-from $(IMAGE_NAME):build-cache \
+		--cache-from $(IMAGE_NAME):latest \
 		-t $(IMAGE_NAME):$(IMAGE_TAG) \
-		-t $(IMAGE_NAME):latest .
+		-t $(IMAGE_NAME):build-cache .
 
 .PHONY: lint
 lint:
@@ -26,7 +27,7 @@ run-pipeline:
 	docker run \
 		-it \
 		--env-file .env \
-		-v $$(PWD)/data:/app/data \
+		-v $(PWD)/data:/app/data \
 		$(IMAGE_NAME) python3 pipeline.py
 
 .PHONY: pull
