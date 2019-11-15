@@ -1,6 +1,4 @@
-include .env
-
-IMAGE_NAME:=scottyhind/$(APP_NAME)
+IMAGE_NAME:=scottyhind/data-nfl-pipeline
 IMAGE_TAG:=$(shell git rev-parse HEAD)
 RUNNING_CONTAINER_NAME=data-nfl-pipeline-live
 
