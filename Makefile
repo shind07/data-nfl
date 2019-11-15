@@ -16,8 +16,9 @@ lint:
 
 .PHONY: push
 push: build
-	@echo "pushing $(IMAGE_NAME):$(IMAGE_TAG) to docker hub..."
-	docker push $(IMAGE_NAME)
+	@echo "pushing $(IMAGE_NAME) to docker hub..."
+	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
+	docker push $(IMAGE_NAME):build-cache
 
 .PHONY: run
 run-pipeline:
