@@ -5,29 +5,32 @@ LOGIC:
 
 NOTE:
 - nflscrapr API takes weeks as a vector, so we just load one season at a time
-- for some reason, 2014-reg isn't working
-- need to check if season is full
 
 TODO:
 - complete tests (done)
 - set up linter (done)
 - set up travisCI
 - set up cloud container repo
-    - start with dockerhub, then ECR
+    - start with dockerhub (done)
+    - then ECR
     - update travisCI
-- put nflscrapr in its own repo
+- put nflscrapr in its own repo (done)
 - containerize everything
+- add README
 """
 import os
 import logging
 
-import docker
-import numpy as np
 import pandas as pd
+import subprocess
 
 from . import config
 
 logging.basicConfig(level=logging.INFO, format='{%(filename)s:%(lineno)d} %(levelname)s - %(message)s')
+
+
+class DataIntegrityError(Exception):
+    pass
 
 
 def extract_current_data():
@@ -44,10 +47,6 @@ def extract_current_data():
     df = pd.read_csv(config.GAMES_CSV_PATH)
     df['season'] = pd.to_numeric(df['season'])
     return df
-
-
-class DataIntegrityError(Exception):
-    pass
 
 
 def data_integrity_check(df):
@@ -79,6 +78,10 @@ def data_integrity_check(df):
         raise DataIntegrityError(f"Most recent season with data is {max_season}"
                                  f" but there's no data for {missing_season}!")
 
+    game_ids = list(df['game_id'])
+    if len(game_ids) != len(set(game_ids)):
+        raise DataIntegrityError("There are duplicate game ids!")
+
     for season in list(seasons):
         season_types = set(df[df['season'] == season]['type'].unique())
 
@@ -98,7 +101,7 @@ def data_integrity_check(df):
             weeks = reg_season_df['week'].unique()
             target_weeks = set(range(1, 18))
             missing_weeks = target_weeks.difference(set(weeks))
-            if len(missing_weeks) > 0:
+            if missing_weeks:
                 raise DataIntegrityError(f"{season} reg season is missing weeks {missing_weeks}!")
 
 
@@ -159,48 +162,6 @@ def truncate(df, season, season_type):
     return df[(df['season'] != season) | (df['type'] != season_type)]
 
 
-def get_next_season_and_type(season, season_type, order='next'):
-    """The next or previous season and type
-
-    :param season: year of season
-    :type season: int
-    :param season_type: type of season (pre, reg, post)
-    :type season_type: str
-    :return: tuple of (season, season_type)
-    :rtype: tuple
-    """
-    if season is None and season_type is None:
-        return (config.START_SEASON, config.SEASON_TYPES[0])
-
-    if order not in ('next', 'prev'):
-        raise ValueError(f"given order {order} not in accepted types (next, prev).")
-
-    if not isinstance(season, (np.int64, int)):
-        raise ValueError(f"Season is type {type(season)}, it should be type 'int'.")
-
-    if season < config.START_SEASON or season > config.CURRENT_SEASON:
-        raise ValueError(f"Invalid season: {season}, must be in >= {config.START_SEASON} and"
-                         f"<= {config.CURRENT_SEASON} ")
-
-    if season_type not in config.SEASON_TYPES:
-        raise ValueError(f"Start season type {season_type} not valid.")
-
-    if order == 'next' and (season, season_type) == (config.CURRENT_SEASON, 'post'):
-        return None
-
-    if order == 'prev' and (season, season_type) == (config.START_SEASON, 'pre'):
-        return None
-
-    grid = get_seasons_grid(config.START_SEASON, 'pre')
-
-    for index, (season_and_type) in enumerate(grid):
-        if (season, season_type) == season_and_type:
-            if order == 'next':
-                return grid[index + 1]
-            else:
-                return grid[index - 1]
-
-
 def get_seasons_grid(start_season, start_season_type):
     """Enumerates all combos of season and season types
 
@@ -240,38 +201,32 @@ def extract_game_data(season, season_type):
     :return: the output of the call to nflscrapr as a dataframe
     :rtype: pandas.DataFrame
     """
-    docker_command = f"games --year={season} --type={season_type}"
-    run_docker_container(
-        config.DOCKER_CONTAINER,
-        docker_command,
-        **config.DOCKER_CONTAINER_ARGS
-    )
+    run_nflscrapr(season, season_type)
     return extract_dumped_data()
 
 
-def run_docker_container(container, command=None, **kwargs):
-    """Runs the given docker container
+def run_nflscrapr(season, season_type, executable='Rscript'):
+    """Runs the game.r script with arguments as a subprocess.
 
-    :param container: name of docker container
-    :type container: str
-    :param command: command to run in docker conatainer, defaults to None
-    :type command: str, optional
+    :param season: year of season
+    :type season: int
+    :param season_type: type of season (pre, reg, post)
+    :type season_type: str
     """
-    logging.info(f"Running docker container {container} with CMD {command}...")
-    client = docker.from_env()
+    command = [
+        executable,
+        f"{config.NFLSCRAPR_JOBS_PATH}/games.r",
+        f"--year={season}",
+        f"--type={season_type}",
+        f"--file={config.GAMES_DUMP_CSV_PATH}"
+    ]
 
-    if command:
-        kwargs = {"command": command, **kwargs}
     try:
-        container = client.containers.run(
-            image=container,
-            **kwargs
-        )
-        container_logs = container.decode()
-        logging.info("Container output:\n" + container_logs)
-
-    except docker.errors.ContainerError as e:
-        logging.error(e)
+        logging.info(f"Running R subproccess with command {command}...")
+        output = subprocess.check_output(command).decode()
+        logging.info(f"command ran successfully with output:\n{output}")
+    except subprocess.CalledProcessError as e:
+        logging.error(e.output)
 
 
 def extract_dumped_data():
@@ -280,10 +235,10 @@ def extract_dumped_data():
     :return: pandas dataframe
     :rtype: pandas.DataFrame
     """
-    if not os.path.exists(config.DUMP_CSV_PATH):
-        raise ValueError(f"Uh oh! {config.DUMP_CSV_PATH} does not exist!")
+    if not os.path.exists(config.GAMES_DUMP_CSV_PATH):
+        raise ValueError(f"Uh oh! {config.GAMES_DUMP_CSV_PATH} does not exist!")
 
-    return pd.read_csv(config.DUMP_CSV_PATH)
+    return pd.read_csv(config.GAMES_DUMP_CSV_PATH)
 
 
 def load_to_csv(df):
@@ -301,7 +256,8 @@ def load_to_csv(df):
         current_df = extract_current_data()
         updated_df = pd.concat([current_df, df])
         updated_df.drop_duplicates(inplace=True)
-        updated_df.to_csv(config.GAMES_CSV_PATH, index=False)
+        sorted_df = updated_df.sort_values(by='game_id', ascending=True)
+        sorted_df.to_csv(config.GAMES_CSV_PATH, index=False)
 
 
 def run():
@@ -333,6 +289,9 @@ def run():
         season, season_type = batch
         logging.info(f"Extracting data for {season}-{season_type}...")
         data = extract_game_data(season, season_type)
-        data_integrity_check(pd.concat([games_data, data]))
-        logging.info(f"Integrity check passed, loading new data.")
+        logging.info(f"Data extracted. Loading...")
         load_to_csv(data)
+
+    games_data = extract_current_data()
+    data_integrity_check(games_data)
+    logging.info("Pipeline completed.")
