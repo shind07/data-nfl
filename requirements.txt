@@ -1,5 +1,4 @@
 alembic
-docker
 flake8
 pandas
 sqlalchemy
