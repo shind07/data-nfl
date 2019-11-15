@@ -32,11 +32,12 @@ run-pipeline:
 
 .PHONY: pull
 pull-cache:
+	@echo pulling from build-cache
 	docker pull $(IMAGE_NAME):build-cache
 
 .PHONY: shell
 shell:
-	docker run -d --name $(RUNNING_CONTAINER_NAME) $(IMAGE_NAME)
+	docker run -d -v $(PWD)/data:/app/data  --name $(RUNNING_CONTAINER_NAME) $(IMAGE_NAME)
 	docker exec -it $(RUNNING_CONTAINER_NAME) bash
 	docker stop $(RUNNING_CONTAINER_NAME)
 	docker rm $(RUNNING_CONTAINER_NAME)
