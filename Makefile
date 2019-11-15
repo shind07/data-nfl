@@ -43,6 +43,3 @@ shell:
 test: build
 	@echo testing...
 	docker run $(IMAGE_NAME) python3 -m unittest discover tests
-
-blah:
-	@echo $(shell pwd)
