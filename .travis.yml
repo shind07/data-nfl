@@ -1,3 +1,4 @@
+---
 language: python
 python:
   - 3.6
@@ -8,9 +9,9 @@ before_install:
   - make build
 jobs:
   include:
-  - stage: check
-    if: type = pull_request
-    script: make pull-cache lint test
-  - stage: deploy  
-    if: type != pull_request and branch = master
-    script: make pull-cache build push
+    - stage: check
+      if: type = pull_request
+      script: make pull-cache lint test
+    - stage: deploy
+      if: type != pull_request and branch = master
+      script: make pull-cache build push
