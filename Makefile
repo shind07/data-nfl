@@ -1,37 +1,44 @@
 include .env
 
-
-.PHONY: build-nflscrapr
-build-nflscrapr:
-	echo "building $(NFLSCRAPR_APP_NAME) container..."
-	docker build -f nflscrapr/Dockerfile -t $(NFLSCRAPR_APP_NAME) ./nflscrapr
+IMAGE_NAME:=scottyhind/$(APP_NAME)
+IMAGE_TAG:=$(shell git rev-parse HEAD)
+RUNNING_CONTAINER_NAME=data-nfl-pipeline-live
 
 .PHONY: build
 build:
-	echo "building container for $(APP_NAME)..."
-	docker build -t $(APP_NAME) .
+	@echo building $(IMAGE_TAG) image...
+	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
+	docker tag $(IMAGE_NAME):$(IMAGE_TAG) $(IMAGE_NAME):latest
 
-.PHONE: lint
+.PHONY: lint
 lint:
-	flake8
+	@flake8
 
-.PHONY: run-nflscrapr
-run-nflscrapr: build-nflscrapr
-	docker run -v ${PWD}/data:/app/data $(NFLSCRAPR_APP_NAME) games --year=2014 --type=reg
-
+.PHONY: push
+push: build
+	@echo "pushing $(IMAGE_NAME):$(IMAGE_TAG) to docker hub..."
+	docker push $(IMAGE_NAME)
 
 .PHONY: run
-run: build
-	echo "running $(APP_NAME) container..."
-	docker run -it --env-file .env -v ${PWD}/data:/app/data $(APP_NAME) 
+run-pipeline:
+	@echo "running $(APP_NAME) container..."
+	docker run \
+		-it \
+		--env-file .env \
+		-v $$(PWD)/data:/app/data \
+		$(IMAGE_NAME) python3 pipeline.py
+
+.PHONY: shell
+shell:
+	docker run -d --name $(RUNNING_CONTAINER_NAME) $(IMAGE_NAME)
+	docker exec -it $(RUNNING_CONTAINER_NAME) bash
+	docker stop $(RUNNING_CONTAINER_NAME)
+	docker rm $(RUNNING_CONTAINER_NAME)
 
 .PHONY: test
 test:
-	python3 -m unittest discover tests
+	@echo testing...
+	docker run $(IMAGE_NAME) python3 -m unittest discover tests
 
-
-.PHONY: run-pipeline
-run-pipeline: build build-nflscrapr
-	python3 pipeline.py
-
-	
+blah:
+	@echo $(shell pwd)
