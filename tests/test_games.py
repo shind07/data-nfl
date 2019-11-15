@@ -57,7 +57,8 @@ class TestGames(unittest.TestCase):
                 (self.test_df['season'] == 2011) &
                 (self.test_df['type'].isin(['reg', 'pre'])) &
                 (self.test_df['week'] != 2)
-            ]
+            ],
+            pd.concat([self.test_df, self.test_df])
         ]
 
         for bad_df in bad_dfs:
@@ -84,28 +85,6 @@ class TestGames(unittest.TestCase):
         latest_seasons_types = self.test_df[self.test_df['season'] == latest_season]["type"].unique()
         expected_latest_season_type = games.get_latest_season_type(list(latest_seasons_types))
         self.assertEqual(latest_season_type, expected_latest_season_type)
-
-    def test_get_next_season_and_type(self):
-        """Test that function can order season types semantically"""
-        results = []
-        for season_type in config.SEASON_TYPES:
-            results.append(games.get_next_season_and_type(2011, season_type))
-
-        self.assertEqual(results[0], (2011, 'reg'))
-        self.assertEqual(results[1], (2011, 'post'))
-        self.assertEqual(results[2], (2012, 'pre'))
-
-        next_season_and_type = games.get_next_season_and_type(config.CURRENT_SEASON, 'post')
-        self.assertIsNone(next_season_and_type)
-
-        next_season_and_type = games.get_next_season_and_type(config.START_SEASON, 'pre', order='prev')
-        self.assertIsNone(next_season_and_type)
-
-        next_season_and_type = games.get_next_season_and_type(config.CURRENT_SEASON, 'post', order='prev')
-        self.assertEqual(next_season_and_type, (config.CURRENT_SEASON, 'reg'))
-
-        next_season_and_type = games.get_next_season_and_type(config.CURRENT_SEASON, 'pre', order='prev')
-        self.assertEqual(next_season_and_type, (config.CURRENT_SEASON - 1, 'post'))
 
     def test_get_seasons_grid(self):
         """Test that the grid is properly populated"""
@@ -154,6 +133,7 @@ class TestGames(unittest.TestCase):
         self.assertEqual(len(grid), expected_number_of_seasons*len(config.SEASON_TYPES))
 
     def test_truncate(self):
+        """Test that the latest season/season type are removed from data."""
 
         df = self.test_df[self.test_df['season'].isin([2011, 2012, 2013])]
         latest_season_and_type = games.get_latest_season_and_type(df)
@@ -174,6 +154,10 @@ class TestGames(unittest.TestCase):
         latest_season_and_type = games.get_latest_season_and_type(df)
         self.assertEqual(latest_season_and_type, (2012, 'post'))
         games.data_integrity_check(df)
+
+    def test_run_nflscrapr(self):
+        """Test that the subprocess is correctly."""
+        pass
 
 
 if __name__ == '__main__':
