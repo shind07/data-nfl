@@ -13,6 +13,8 @@ build:
 
 .PHONY: lint
 lint:
+	@find . -type f -name '*.yml' -exec yamllint  -f parsable {} +
+	@find . -type f -name '*.yaml' -exec yamllint -f parsable {} +
 	@flake8
 
 .PHONY: push
