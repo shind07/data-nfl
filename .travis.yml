@@ -6,7 +6,7 @@ before_install:
 
 jobs:
   include:
-  - if: type = pull_request AND branch != master:
+  - if: type = pull_request AND branch != master
     script: make lint test
-  - if: type != pull_request and branch = master:
+  - if: type != pull_request and branch = master
     script: make push
