@@ -2,3 +2,4 @@ alembic
 flake8
 pandas
 sqlalchemy
+yamllint

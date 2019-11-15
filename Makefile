@@ -1,23 +1,27 @@
-include .env
-
-IMAGE_NAME:=scottyhind/$(APP_NAME)
+IMAGE_NAME=scottyhind/data-nfl-pipeline
 IMAGE_TAG:=$(shell git rev-parse HEAD)
 RUNNING_CONTAINER_NAME=data-nfl-pipeline-live
 
 .PHONY: build
 build:
 	@echo building $(IMAGE_TAG) image...
-	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
-	docker tag $(IMAGE_NAME):$(IMAGE_TAG) $(IMAGE_NAME):latest
+	docker build \
+		--cache-from $(IMAGE_NAME):build-cache \
+		--cache-from $(IMAGE_NAME):latest \
+		-t $(IMAGE_NAME):$(IMAGE_TAG) \
+		-t $(IMAGE_NAME):build-cache .
 
 .PHONY: lint
 lint:
+	@find . -type f -name '*.yml' -exec yamllint  -f parsable {} +
+	@find . -type f -name '*.yaml' -exec yamllint -f parsable {} +
 	@flake8
 
 .PHONY: push
 push: build
-	@echo "pushing $(IMAGE_NAME):$(IMAGE_TAG) to docker hub..."
-	docker push $(IMAGE_NAME)
+	@echo "pushing $(IMAGE_NAME) to docker hub..."
+	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
+	docker push $(IMAGE_NAME):build-cache
 
 .PHONY: run
 run-pipeline:
@@ -25,20 +29,22 @@ run-pipeline:
 	docker run \
 		-it \
 		--env-file .env \
-		-v $$(PWD)/data:/app/data \
+		-v $(PWD)/data:/app/data \
 		$(IMAGE_NAME) python3 pipeline.py
+
+.PHONY: pull
+pull-cache:
+	@echo pulling from build-cache
+	docker pull $(IMAGE_NAME):build-cache
 
 .PHONY: shell
 shell:
-	docker run -d --name $(RUNNING_CONTAINER_NAME) $(IMAGE_NAME)
+	docker run -d -v $(PWD)/data:/app/data  --name $(RUNNING_CONTAINER_NAME) $(IMAGE_NAME)
 	docker exec -it $(RUNNING_CONTAINER_NAME) bash
 	docker stop $(RUNNING_CONTAINER_NAME)
 	docker rm $(RUNNING_CONTAINER_NAME)
 
 .PHONY: test
-test:
+test: build
 	@echo testing...
 	docker run $(IMAGE_NAME) python3 -m unittest discover tests
-
-blah:
-	@echo $(shell pwd)
