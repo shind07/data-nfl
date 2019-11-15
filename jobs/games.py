@@ -226,7 +226,8 @@ def run_nflscrapr(season, season_type, executable='Rscript'):
         output = subprocess.check_output(command).decode()
         logging.info(f"command ran successfully with output:\n{output}")
     except subprocess.CalledProcessError as e:
-        logging.error(e.output)
+        logging.info(e.output)
+        sys.exit(1)
 
 
 def extract_dumped_data():
