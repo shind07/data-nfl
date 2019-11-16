@@ -7,16 +7,8 @@ NOTE:
 - nflscrapr API takes weeks as a vector, so we just load one season at a time
 
 TODO:
-- complete tests (done)
-- set up linter (done)
-- set up travisCI
-- set up cloud container repo
-    - start with dockerhub (done)
-    - then ECR
-    - update travisCI
-- put nflscrapr in its own repo (done)
-- containerize everything
 - add README
+- refactor into separate files
 """
 import logging
 import os
