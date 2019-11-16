@@ -7,8 +7,16 @@ build:
 	@echo building $(IMAGE_TAG) image...
 	docker build \
 		--cache-from $(IMAGE_NAME):build-cache \
-		-t $(IMAGE_NAME):$(IMAGE_TAG) \
+		--cache-from $(IMAGE_NAME):latest \
+		-t $(IMAGE_NAME):latest \
 		-t $(IMAGE_NAME):build-cache .
+
+.PHONY: db-shell
+db-shell:
+	docker-compose up -d --build
+	docker exec data-nfl-pipeline-app wait-for-port postgres
+	docker exec -it data-nfl-pipeline-db psql nfl -U postgres --host localhost
+	docker-compose down
 
 .PHONY: lint
 lint:
