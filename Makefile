@@ -35,7 +35,7 @@ run-pipeline:
 .PHONY: pull
 pull-cache:
 	@echo pulling from build-cache
-	docker pull $(IMAGE_NAME):build-cache
+	docker pull $(IMAGE_NAME):build-cache || true
 
 .PHONY: shell
 shell:
