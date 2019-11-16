@@ -26,15 +26,21 @@ RUN apt-get install -y  \
         python3 \ 
         python3-pip \
         git \
+        postgresql-client \
     && apt-get clean
 
 COPY requirements.txt /tmp/requirements.txt
 RUN pip3 install -r tmp/requirements.txt
 
-COPY docker-entrypoint.sh /usr/local/bin/
+COPY bin/wait-for-port /usr/local/bin
+RUN chmod +x /usr/local/bin/wait-for-port
 
-COPY . /app
+COPY jobs /app/jobs
+COPY nflscrapr /apps/nflscrapr
+COPY tests /app/tests
+COPY pipeline.py /app
+
 WORKDIR /app
 
-ENTRYPOINT [ "bash", "docker-entrypoint.sh" ]
+ENTRYPOINT [ ]
 CMD [ "sleep", "infinity" ]
