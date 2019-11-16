@@ -7,7 +7,6 @@ build:
 	@echo building $(IMAGE_TAG) image...
 	docker build \
 		--cache-from $(IMAGE_NAME):build-cache \
-		--cache-from $(IMAGE_NAME):latest \
 		-t $(IMAGE_NAME):$(IMAGE_TAG) \
 		-t $(IMAGE_NAME):build-cache .
 
@@ -35,7 +34,7 @@ run-pipeline:
 .PHONY: pull
 pull-cache:
 	@echo pulling from build-cache
-	docker pull "$(IMAGE_NAME):build-cache" || true
+	docker pull $(IMAGE_NAME):build-cache || true
 
 .PHONY: shell
 shell:
