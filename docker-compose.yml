@@ -7,8 +7,8 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_PASSWORD: password # default POSTGRES_USER is postgres
-      POSTGRES_DB: nfl # default is value of POSTGRES_USER
+      POSTGRES_PASSWORD: password  # default POSTGRES_USER is postgres
+      POSTGRES_DB: nfl  # default is value of POSTGRES_USER
     ports:
       - 5432:5432
   app:
