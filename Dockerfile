@@ -22,6 +22,7 @@ RUN R -e "install.packages('hashmap', repos='http://cran.us.r-project.org')"
 RUN R -e "install.packages('optparse')"
 RUN R -e "devtools::install_github(repo='maksimhorowitz/nflscrapR')"
 
+# now that the R stuff is installed, we'll install other stuf
 RUN apt-get install -y  \
         python3 \ 
         python3-pip \
