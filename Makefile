@@ -24,11 +24,22 @@ lint:
 	@find . -type f -name '*.yaml' -exec yamllint -f parsable {} +
 	@flake8
 
+.PHONY: pull
+pull-cache:
+	@echo pulling from build-cache
+	docker pull $(IMAGE_NAME):build-cache || true
+	docker tag $(IMAGE_NAME):build-cache $(IMAGE_NAME):latest
+
 .PHONY: push
 push: build
 	@echo "pushing $(IMAGE_NAME) to docker hub..."
-	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
+	docker push $(IMAGE_NAME):latest
 	docker push $(IMAGE_NAME):build-cache
+
+.PHONY: deploy
+deploy: push
+	docker tag $(IMAGE_NAME):latest-cache $(IMAGE_NAME):$(IMAGE_TAG) 
+	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
 
 .PHONY: run
 run-pipeline:
@@ -38,11 +49,6 @@ run-pipeline:
 		--env-file .env \
 		-v $(PWD)/data:/app/data \
 		$(IMAGE_NAME) python3 pipeline.py
-
-.PHONY: pull
-pull-cache:
-	@echo pulling from build-cache
-	docker pull $(IMAGE_NAME):build-cache || true
 
 .PHONY: shell
 shell:
