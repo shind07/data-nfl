@@ -1,0 +1,36 @@
+---
+version: '3.2'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: data-nfl-pipeline-db
+    restart: always
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_PASSWORD: password  # default POSTGRES_USER is postgres
+      POSTGRES_DB: nfl  # default is value of POSTGRES_USER
+    ports:
+      - 5432:5432
+  app:
+    build:
+      context: .
+      cache_from:
+        - scottyhind/data-nfl-pipeline:latest
+    image: scottyhind/data-nfl-pipeline
+    container_name: data-nfl-pipeline-app
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_PASSWORD: password  # default POSTGRES_USER is postgres
+      POSTGRES_DB: nfl  # default is value of POSTGRES_USER
+
+volumes:
+  db-data:
+
+# NOTE mounting - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+# does not instantiate the DB as expected because we are already
+# mounting db-data (to persist the data), the db doesn't need
+# to be initialized, so that init wont run. We need to run manually
+# using an entrypoint.

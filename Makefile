@@ -8,8 +8,15 @@ build:
 	docker build \
 		--cache-from $(IMAGE_NAME):build-cache \
 		--cache-from $(IMAGE_NAME):latest \
-		-t $(IMAGE_NAME):$(IMAGE_TAG) \
+		-t $(IMAGE_NAME):latest \
 		-t $(IMAGE_NAME):build-cache .
+
+.PHONY: db-shell
+db-shell:
+	docker-compose up -d --build
+	docker exec data-nfl-pipeline-app wait-for-port postgres
+	docker exec -it data-nfl-pipeline-db psql nfl -U postgres --host localhost
+	docker-compose down
 
 .PHONY: lint
 lint:
@@ -17,11 +24,22 @@ lint:
 	@find . -type f -name '*.yaml' -exec yamllint -f parsable {} +
 	@flake8
 
+.PHONY: pull
+pull-cache:
+	@echo pulling from build-cache
+	docker pull $(IMAGE_NAME):build-cache || true
+	docker tag $(IMAGE_NAME):build-cache $(IMAGE_NAME):latest
+
 .PHONY: push
 push: build
 	@echo "pushing $(IMAGE_NAME) to docker hub..."
-	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
+	docker push $(IMAGE_NAME):latest
 	docker push $(IMAGE_NAME):build-cache
+
+.PHONY: deploy
+deploy: push
+	docker tag $(IMAGE_NAME):latest $(IMAGE_NAME):$(IMAGE_TAG) 
+	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
 
 .PHONY: run
 run-pipeline:
@@ -31,11 +49,6 @@ run-pipeline:
 		--env-file .env \
 		-v $(PWD)/data:/app/data \
 		$(IMAGE_NAME) python3 pipeline.py
-
-.PHONY: pull
-pull-cache:
-	@echo pulling from build-cache
-	docker pull $(IMAGE_NAME):build-cache
 
 .PHONY: shell
 shell:
