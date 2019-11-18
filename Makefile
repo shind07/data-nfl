@@ -38,7 +38,7 @@ push: build
 
 .PHONY: deploy
 deploy: push
-	docker tag $(IMAGE_NAME):latest-cache $(IMAGE_NAME):$(IMAGE_TAG) 
+	docker tag $(IMAGE_NAME):latest $(IMAGE_NAME):$(IMAGE_TAG) 
 	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
 
 .PHONY: run
