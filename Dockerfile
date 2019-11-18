@@ -37,7 +37,7 @@ COPY bin/wait-for-port /usr/local/bin
 RUN chmod +x /usr/local/bin/wait-for-port
 
 COPY jobs /app/jobs
-COPY nflscrapr /apps/nflscrapr
+COPY nflscrapr /app/nflscrapr
 COPY tests /app/tests
 COPY pipeline.py /app
 
