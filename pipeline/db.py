@@ -17,7 +17,7 @@ def connect_to_db(connection_string):
         conn_str = db.get_connection_string()
         conn = db.connect_to_db(conn_str)
         results = conn.execute('select * from database')
-    
+
     :param connection_string: [description]
     :type connection_string: [type]
     :return: [description]
