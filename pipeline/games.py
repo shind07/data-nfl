@@ -47,7 +47,7 @@ def _data_integrity_check(df):
         raise ValueError(f"Type of df is {type(df)}, it should be pandas.DataFrame")
 
     logging.info(f"Checking integrity of games dataframe with shape {df.shape}...")
-    
+
     seasons = df['season'].unique()
     max_season = int(max(seasons))
 
