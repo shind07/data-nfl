@@ -1,5 +1,6 @@
 alembic
 flake8
 pandas
+psycopg2-binary
 sqlalchemy
 yamllint
