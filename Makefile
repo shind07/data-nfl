@@ -48,7 +48,7 @@ run-pipeline:
 		-it \
 		--env-file .env \
 		-v $(PWD)/data:/app/data \
-		$(IMAGE_NAME) python3 pipeline.py
+		$(IMAGE_NAME) python3 -m pipeline
 
 .PHONY: shell
 shell:
