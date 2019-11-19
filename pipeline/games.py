@@ -8,16 +8,16 @@ NOTE:
 
 TODO:
 - add README
-- refactor into separate files
 """
 import logging
-import os
-import sys
 
 import pandas as pd
-import subprocess
 
-from . import config
+from . import (
+    config,
+    etl_tools,
+    nflscrapr
+)
 
 logging.basicConfig(level=logging.INFO, format='{%(filename)s:%(lineno)d} %(levelname)s - %(message)s')
 
@@ -26,26 +26,11 @@ class DataIntegrityError(Exception):
     pass
 
 
-def extract_current_data():
-    """Loads games csv into a dataframe.
-
-    :return: dataframe if file exists, else None
-    :rtype: pandas.DataFrame
-    """
-    logging.info(f'Loading games data from {config.GAMES_CSV_PATH}...')
-
-    if not os.path.exists(config.GAMES_CSV_PATH):
-        return None
-
-    df = pd.read_csv(config.GAMES_CSV_PATH)
-    df['season'] = pd.to_numeric(df['season'])
-    return df
-
-
-def data_integrity_check(df):
+def _data_integrity_check(df):
     """Check that the games data is correct.
 
-    3 conditions must be met:
+    4 conditions must be met:
+    - game_id must be unique
     - there must not be any gaps in the seasons
     - seasons must have all 3 season types (except most recent season)
     - seasons must have semantic ordering of season types (pre -> reg -> post)
@@ -61,6 +46,8 @@ def data_integrity_check(df):
     if not isinstance(df, pd.DataFrame):
         raise ValueError(f"Type of df is {type(df)}, it should be pandas.DataFrame")
 
+    logging.info(f"Checking integrity of games dataframe with shape {df.shape}...")
+    
     seasons = df['season'].unique()
     max_season = int(max(seasons))
 
@@ -97,8 +84,10 @@ def data_integrity_check(df):
             if missing_weeks:
                 raise DataIntegrityError(f"{season} reg season is missing weeks {missing_weeks}!")
 
+    logging.info("Integrity check passed.")
 
-def get_latest_season_and_type(df):
+
+def _get_latest_season_and_type(df):
     """Gets the latest season and season type in the games data
 
     :param df: games data
@@ -115,11 +104,11 @@ def get_latest_season_and_type(df):
     df = df[df['state_of_game'] == 'POST']
     latest_season = df['season'].max()
     season_types = df[df['season'] == latest_season]['type'].unique()
-    latest_season_type = get_latest_season_type(list(season_types))
+    latest_season_type = _get_latest_season_type(list(season_types))
     return latest_season, latest_season_type
 
 
-def get_latest_season_type(season_types_list):
+def _get_latest_season_type(season_types_list):
     """Uses the semantic ordering of season types to get the latest/max
 
     :param season_types_list: list of season types - set or subset of (pre, reg, post)
@@ -140,7 +129,7 @@ def get_latest_season_type(season_types_list):
     return latest_season_type
 
 
-def truncate(df, season, season_type):
+def _truncate(df, season, season_type):
     """Removes the latest season and season type from df.
 
     :param df: dataframe of games data
@@ -155,7 +144,7 @@ def truncate(df, season, season_type):
     return df[(df['season'] != season) | (df['type'] != season_type)]
 
 
-def get_seasons_grid(start_season, start_season_type):
+def _get_seasons_grid(start_season, start_season_type):
     """Enumerates all combos of season and season types
 
     :param start_season: year of season to start the grid
@@ -184,7 +173,7 @@ def get_seasons_grid(start_season, start_season_type):
     return grid
 
 
-def extract_game_data(season, season_type):
+def _extract_games_data(season, season_type):
     """Runs the nflscrapr docker container for the given season and type
 
     :param season: year of season
@@ -194,77 +183,26 @@ def extract_game_data(season, season_type):
     :return: the output of the call to nflscrapr as a dataframe
     :rtype: pandas.DataFrame
     """
-    run_nflscrapr(season, season_type)
-    return extract_dumped_data()
-
-
-def run_nflscrapr(season, season_type, executable='Rscript'):
-    """Runs the game.r script with arguments as a subprocess.
-
-    :param season: year of season
-    :type season: int
-    :param season_type: type of season (pre, reg, post)
-    :type season_type: str
-    """
-    command = [
-        executable,
-        f"{config.NFLSCRAPR_JOBS_PATH}/games.r",
-        f"--year={season}",
-        f"--type={season_type}",
-        f"--file={config.GAMES_DUMP_CSV_PATH}"
-    ]
-
-    try:
-        logging.info(f"Running R subproccess with command {command}...")
-        output = subprocess.check_output(command).decode()
-        logging.info(f"command ran successfully with output:\n{output}")
-    except subprocess.CalledProcessError as e:
-        logging.info(e.output)
-        sys.exit(1)
-
-
-def extract_dumped_data():
-    """Loads the data that was dumped from the docker container run
-
-    :return: pandas dataframe
-    :rtype: pandas.DataFrame
-    """
-    if not os.path.exists(config.GAMES_DUMP_CSV_PATH):
-        raise ValueError(f"Uh oh! {config.GAMES_DUMP_CSV_PATH} does not exist!")
-
-    return pd.read_csv(config.GAMES_DUMP_CSV_PATH)
-
-
-def load_to_csv(df):
-    """Loads the dataframe into a csv.
-
-    :param df: dataframe of games data
-    :type df: pandas.DataFrame
-    """
-    if not isinstance(df, pd.DataFrame):
-        raise ValueError(f"Type of df is {type(df)}, it should be pandas.DataFrame")
-
-    if not os.path.exists(config.GAMES_CSV_PATH):
-        df.to_csv(config.GAMES_CSV_PATH, index=False)
-    else:
-        current_df = extract_current_data()
-        updated_df = pd.concat([current_df, df])
-        updated_df.drop_duplicates(inplace=True)
-        sorted_df = updated_df.sort_values(by='game_id', ascending=True)
-        sorted_df.to_csv(config.GAMES_CSV_PATH, index=False)
+    nflscrapr.run(
+        'games',
+        season=season,
+        season_type=season_type
+    )
+    nflscrapr_output = etl_tools.extract_from_csv(config.GAMES_DUMP_CSV_PATH)
+    return nflscrapr_output
 
 
 def run():
     """
     Runs the workflow for extracting and loading games data.
     - Finds the starting point for extracting new data
-    - Extracts new data using runs of nflscrapr docker container
+    - Extracts new data using the nflscrapr module
     - Saves data into csv
     """
-    games_data = extract_current_data()
-    data_integrity_check(games_data)
+    games_data = etl_tools.extract_from_csv(config.GAMES_CSV_PATH)
+    _data_integrity_check(games_data)
 
-    latest_season, latest_season_type = get_latest_season_and_type(games_data)
+    latest_season, latest_season_type = _get_latest_season_and_type(games_data)
 
     logging.info(f"Latest season and type in current data: {(latest_season, latest_season_type)}")
 
@@ -272,20 +210,24 @@ def run():
         batch_start_season, batch_start_type = config.START_SEASON, config.SEASON_TYPES[0]
 
     else:
-        games_data = truncate(games_data, latest_season, latest_season_type)
+        games_data = _truncate(games_data, latest_season, latest_season_type)
         batch_start_season, batch_start_type = latest_season, latest_season_type
 
     logging.info(f"Starting batch at {(batch_start_season, batch_start_type)}...")
 
-    batches = get_seasons_grid(batch_start_season, batch_start_type)
-
+    batches = _get_seasons_grid(batch_start_season, batch_start_type)
     for batch in batches:
         season, season_type = batch
         logging.info(f"Extracting data for {season}-{season_type}...")
-        data = extract_game_data(season, season_type)
-        logging.info(f"Data extracted. Loading...")
-        load_to_csv(data)
+        batch_data = _extract_games_data(season, season_type)
+        logging.info(f"Data extracted. Appending {batch_data.shape[0]} rows...")
+        games_data = pd.concat([games_data, batch_data])
 
-    games_data = extract_current_data()
-    data_integrity_check(games_data)
+    _data_integrity_check(games_data)
+    etl_tools.load_to_csv(
+        games_data,
+        config.GAMES_CSV_PATH,
+        sort_by='game_id',
+        sort_order='asc'
+    )
     logging.info("Pipeline completed.")
