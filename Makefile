@@ -41,14 +41,14 @@ deploy: push
 	docker tag $(IMAGE_NAME):latest $(IMAGE_NAME):$(IMAGE_TAG) 
 	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
 
-.PHONY: run
-run-pipeline:
-	@echo "running $(APP_NAME) container..."
+.PHONY: run-pipeline
+run-pipeline: build
+	@echo "running $(IMAGE_NAME) container..."
 	docker run \
 		-it \
 		--env-file .env \
 		-v $(PWD)/data:/app/data \
-		$(IMAGE_NAME) python3 pipeline.py
+		$(IMAGE_NAME) python3 -m pipeline
 
 .PHONY: shell
 shell:

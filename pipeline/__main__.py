@@ -1,6 +1,6 @@
 import logging
 
-from jobs import games
+from . import games
 
 logging.basicConfig(level=logging.INFO, format='{%(filename)s:%(lineno)d} %(levelname)s - %(message)s')
 
