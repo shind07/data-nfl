@@ -15,6 +15,7 @@ import pandas as pd
 
 from . import (
     config,
+    db,
     etl_tools,
     nflscrapr
 )
@@ -39,8 +40,8 @@ def _data_integrity_check(df):
     :type df: pandas.DataFrame
     :raises DataIntegrityError: if one of the 3 conditions aren't met
     """
-    if df is None:
-        logging.warning("Dataframe is empty! No games data recorded.")
+    if df is None or len(df) == 0:
+        logging.info("Dataframe is empty! No games data recorded.")
         return
 
     if not isinstance(df, pd.DataFrame):
@@ -95,7 +96,7 @@ def _get_latest_season_and_type(df):
     :return: tuple of (latest_season, latest_season_type)
     :rtype: tuple
     """
-    if df is None:
+    if df is None or len(df) == 0:
         return (None, None)
 
     if not isinstance(df, pd.DataFrame):
@@ -142,6 +143,19 @@ def _truncate(df, season, season_type):
     :rtype: pandas.DataFrame
     """
     return df[(df['season'] != season) | (df['type'] != season_type)]
+
+
+def _truncate_games_table(db_conn, season, season_type):
+    """Drops rows from the games table that are of season and season_type.
+
+    :param db_conn: sqlalchemy database connection
+    :type db_conn: sqlalchemy.engine.base.Engine | sqlalchemy.engine.base.Connection
+    :param season: year of season
+    :type season: int
+    :param season_type: type of season (pre, reg, post)
+    :type season_type: str
+    """
+    db_conn.execute(f"DELETE FROM games WHERE season = {season} and season_type = {season_type}")
 
 
 def _get_seasons_grid(start_season, start_season_type):
@@ -199,11 +213,12 @@ def run():
     - Extracts new data using the nflscrapr module
     - Saves data into csv
     """
-    games_data = etl_tools.extract_from_csv(config.GAMES_CSV_PATH)
+    games_db_conn = db.connect_to_db()
+    games_query = "SELECT * FROM GAMES"
+    games_data = etl_tools.extract_from_db(games_db_conn, games_query)
     _data_integrity_check(games_data)
 
     latest_season, latest_season_type = _get_latest_season_and_type(games_data)
-
     logging.info(f"Latest season and type in current data: {(latest_season, latest_season_type)}")
 
     if latest_season is None:
@@ -224,10 +239,11 @@ def run():
         games_data = pd.concat([games_data, batch_data])
 
     _data_integrity_check(games_data)
-    etl_tools.load_to_csv(
+    logging.info(f"Loading {games_data.shape[0]} rows to the games table...")
+    etl_tools.load_to_db(
+        games_db_conn,
+        'games',
         games_data,
-        config.GAMES_CSV_PATH,
-        sort_by='game_id',
-        sort_order='asc'
+        if_exists='replace'
     )
     logging.info("Pipeline completed.")
