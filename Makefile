@@ -42,13 +42,12 @@ deploy: push
 	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
 
 .PHONY: run-pipeline
-run-pipeline: build
+run-pipeline:
 	@echo "running $(IMAGE_NAME) container..."
-	docker run \
-		-it \
-		--env-file .env \
-		-v $(PWD)/data:/app/data \
-		$(IMAGE_NAME) python3 -m pipeline
+	docker-compose up -d --build
+	docker exec data-nfl-pipeline-app wait-for-port postgres
+	docker exec data-nfl-pipeline-app python3 -m pipeline
+	docker-compose down
 
 .PHONY: shell
 shell:
