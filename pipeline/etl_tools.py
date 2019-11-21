@@ -78,7 +78,7 @@ def load_to_csv(df, csv_path, append=False, sort_by=None, sort_order='asc'):
     df.to_csv(csv_path, index=False)
 
 
-def load_to_db(db_conn, table_name, df, if_exists="fail"):
+def load_to_db(db_conn, table_name, df, if_exists="append"):
     """Writes the data in df to table_name.
 
     Currently, the replace function is NOT atomic. Added to TODO.
@@ -98,6 +98,7 @@ def load_to_db(db_conn, table_name, df, if_exists="fail"):
     if if_exists == "replace":
         db_conn.execute(f"TRUNCATE TABLE {table_name};")
         if_exists = "append"
+
     df.to_sql(table_name, db_conn, if_exists=if_exists, index=False)
 
 
