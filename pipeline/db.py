@@ -6,10 +6,6 @@ PG_HOST = 'postgres'
 DB_NAME = 'nfl'
 
 
-def _get_connection_string():
-    return f"postgresql://{PG_USERNAME}:{PG_PASSWORD}@{PG_HOST}/{DB_NAME}"
-
-
 def connect_to_db():
     """Connect to a db with the given connection string
 
@@ -25,3 +21,8 @@ def connect_to_db():
     """
     connection_string = _get_connection_string()
     return db.create_engine(connection_string)
+
+
+def _get_connection_string():
+    return f"postgresql://{PG_USERNAME}:{PG_PASSWORD}@{PG_HOST}/{DB_NAME}"
+
