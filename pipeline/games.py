@@ -130,7 +130,7 @@ def _get_latest_season_type(season_types_list):
     return latest_season_type
 
 
-def _truncate(df, season, season_type):
+def _truncate_games_df(df, season, season_type):
     """Removes the latest season and season type from df.
 
     :param df: dataframe of games data
@@ -155,7 +155,9 @@ def _truncate_games_table(db_conn, season, season_type):
     :param season_type: type of season (pre, reg, post)
     :type season_type: str
     """
-    db_conn.execute(f"DELETE FROM games WHERE season = {season} and season_type = {season_type}")
+    delete_statement = f"DELETE FROM games WHERE season = {season} and type = '{season_type}'"
+    logging.info(f"Truncating games table with statement: {delete_statement}")
+    db_conn.execute(delete_statement)
 
 
 def _get_seasons_grid(start_season, start_season_type):
@@ -225,7 +227,7 @@ def run():
         batch_start_season, batch_start_type = config.START_SEASON, config.SEASON_TYPES[0]
 
     else:
-        games_data = _truncate(games_data, latest_season, latest_season_type)
+        _truncate_games_table(games_db_conn, latest_season, latest_season_type)
         batch_start_season, batch_start_type = latest_season, latest_season_type
 
     logging.info(f"Starting batch at {(batch_start_season, batch_start_type)}...")
@@ -233,17 +235,13 @@ def run():
     batches = _get_seasons_grid(batch_start_season, batch_start_type)
     for batch in batches:
         season, season_type = batch
-        logging.info(f"Extracting data for {season}-{season_type}...")
+        logging.info(f"Starting new batch: extracting data for {season}-{season_type}...")
         batch_data = _extract_games_data(season, season_type)
-        logging.info(f"Data extracted. Appending {batch_data.shape[0]} rows...")
-        games_data = pd.concat([games_data, batch_data])
-
-    _data_integrity_check(games_data)
-    logging.info(f"Loading {games_data.shape[0]} rows to the games table...")
-    etl_tools.load_to_db(
-        games_db_conn,
-        'games',
-        games_data,
-        if_exists='replace'
+        logging.info(f"Data extracted. Loading {batch_data.shape[0]} rows...")
+        etl_tools.load_to_db(
+            games_db_conn,
+            'games',
+            batch_data,
     )
+
     logging.info("Pipeline completed.")
