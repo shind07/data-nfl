@@ -25,4 +25,3 @@ def connect_to_db():
 
 def _get_connection_string():
     return f"postgresql://{PG_USERNAME}:{PG_PASSWORD}@{PG_HOST}/{DB_NAME}"
-

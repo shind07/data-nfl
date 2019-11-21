@@ -242,6 +242,6 @@ def run():
             games_db_conn,
             'games',
             batch_data,
-    )
+        )
 
     logging.info("Pipeline completed.")
