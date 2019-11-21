@@ -135,7 +135,7 @@ class TestGames(unittest.TestCase):
         self.assertEqual(len(seasons), expected_number_of_seasons)
         self.assertEqual(len(grid), expected_number_of_seasons*len(config.SEASON_TYPES))
 
-    def test_truncate(self):
+    def test_truncate_games_df(self):
         """Test that the latest season/season type are removed from data."""
 
         df = self.test_df[self.test_df['season'].isin([2011, 2012, 2013])]
@@ -143,17 +143,17 @@ class TestGames(unittest.TestCase):
         self.assertEqual(latest_season_and_type, (2013, 'post'))
         games._data_integrity_check(df)
 
-        df = games._truncate(df, *latest_season_and_type)
+        df = games._truncate_games_df(df, *latest_season_and_type)
         latest_season_and_type = games._get_latest_season_and_type(df)
         self.assertEqual(latest_season_and_type, (2013, 'reg'))
         games._data_integrity_check(df)
 
-        df = games._truncate(df, *latest_season_and_type)
+        df = games._truncate_games_df(df, *latest_season_and_type)
         latest_season_and_type = games._get_latest_season_and_type(df)
         self.assertEqual(latest_season_and_type, (2013, 'pre'))
         games._data_integrity_check(df)
 
-        df = games._truncate(df, *latest_season_and_type)
+        df = games._truncate_games_df(df, *latest_season_and_type)
         latest_season_and_type = games._get_latest_season_and_type(df)
         self.assertEqual(latest_season_and_type, (2012, 'post'))
         games._data_integrity_check(df)
