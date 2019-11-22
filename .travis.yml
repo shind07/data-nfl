@@ -3,10 +3,6 @@ language: python
 python:
   - 3.6
 cache: pip
-before_install:
-  - docker pull scottyhind/data-nfl-pipeline:build-cache
-install:
-  - pip install -r requirements.txt
 services:
   - docker
 jobs:

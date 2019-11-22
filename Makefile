@@ -9,7 +9,7 @@ build:
 		--cache-from $(IMAGE_NAME):build-cache \
 		--cache-from $(IMAGE_NAME):latest \
 		-t $(IMAGE_NAME):latest \
-		-t $(IMAGE_NAME):build-cache .
+		-t $(IMAGE_NAME):$(IMAGE_TAG) .
 
 .PHONY: db-shell
 db-shell:
@@ -28,13 +28,14 @@ lint:
 pull-cache:
 	@echo pulling from build-cache
 	docker pull $(IMAGE_NAME):build-cache || true
-	docker tag $(IMAGE_NAME):build-cache $(IMAGE_NAME):latest
 
 .PHONY: push
 push: build
 	@echo "pushing $(IMAGE_NAME) to docker hub..."
-	docker push $(IMAGE_NAME):latest
+	docker tag $(IMAGE_NAME):$(IMAGE_TAG) $(IMAGE_NAME):build-cache
+	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
 	docker push $(IMAGE_NAME):build-cache
+	docker push $(IMAGE_NAME):latest
 
 .PHONY: deploy
 deploy: push
@@ -42,13 +43,12 @@ deploy: push
 	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
 
 .PHONY: run-pipeline
-run-pipeline: build
+run-pipeline:
 	@echo "running $(IMAGE_NAME) container..."
-	docker run \
-		-it \
-		--env-file .env \
-		-v $(PWD)/data:/app/data \
-		$(IMAGE_NAME) python3 -m pipeline
+	docker-compose up -d --build
+	docker exec data-nfl-pipeline-app wait-for-port postgres
+	docker exec data-nfl-pipeline-app python3 -m pipeline
+	docker-compose down
 
 .PHONY: shell
 shell:
@@ -60,4 +60,4 @@ shell:
 .PHONY: test
 test: build
 	@echo testing...
-	docker run $(IMAGE_NAME) python3 -m unittest discover tests
+	docker run $(IMAGE_NAME):latest python3 -m unittest discover tests

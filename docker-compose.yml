@@ -20,6 +20,8 @@ services:
         - scottyhind/data-nfl-pipeline:latest
     image: scottyhind/data-nfl-pipeline
     container_name: data-nfl-pipeline-app
+    volumes:
+      - ./data:/app/data
     depends_on:
       - postgres
     environment:

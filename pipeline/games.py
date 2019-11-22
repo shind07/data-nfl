@@ -15,6 +15,7 @@ import pandas as pd
 
 from . import (
     config,
+    db,
     etl_tools,
     nflscrapr
 )
@@ -39,8 +40,8 @@ def _data_integrity_check(df):
     :type df: pandas.DataFrame
     :raises DataIntegrityError: if one of the 3 conditions aren't met
     """
-    if df is None:
-        logging.warning("Dataframe is empty! No games data recorded.")
+    if df is None or len(df) == 0:
+        logging.info("Dataframe is empty! No games data recorded.")
         return
 
     if not isinstance(df, pd.DataFrame):
@@ -95,7 +96,7 @@ def _get_latest_season_and_type(df):
     :return: tuple of (latest_season, latest_season_type)
     :rtype: tuple
     """
-    if df is None:
+    if df is None or len(df) == 0:
         return (None, None)
 
     if not isinstance(df, pd.DataFrame):
@@ -129,7 +130,7 @@ def _get_latest_season_type(season_types_list):
     return latest_season_type
 
 
-def _truncate(df, season, season_type):
+def _truncate_games_df(df, season, season_type):
     """Removes the latest season and season type from df.
 
     :param df: dataframe of games data
@@ -142,6 +143,21 @@ def _truncate(df, season, season_type):
     :rtype: pandas.DataFrame
     """
     return df[(df['season'] != season) | (df['type'] != season_type)]
+
+
+def _truncate_games_table(db_conn, season, season_type):
+    """Drops rows from the games table that are of season and season_type.
+
+    :param db_conn: sqlalchemy database connection
+    :type db_conn: sqlalchemy.engine.base.Engine | sqlalchemy.engine.base.Connection
+    :param season: year of season
+    :type season: int
+    :param season_type: type of season (pre, reg, post)
+    :type season_type: str
+    """
+    delete_statement = f"DELETE FROM games WHERE season = {season} and type = '{season_type}'"
+    logging.info(f"Truncating games table with statement: {delete_statement}")
+    db_conn.execute(delete_statement)
 
 
 def _get_seasons_grid(start_season, start_season_type):
@@ -199,18 +215,19 @@ def run():
     - Extracts new data using the nflscrapr module
     - Saves data into csv
     """
-    games_data = etl_tools.extract_from_csv(config.GAMES_CSV_PATH)
+    games_db_conn = db.connect_to_db()
+    games_query = "SELECT * FROM GAMES"
+    games_data = etl_tools.extract_from_db(games_db_conn, games_query)
     _data_integrity_check(games_data)
 
     latest_season, latest_season_type = _get_latest_season_and_type(games_data)
-
     logging.info(f"Latest season and type in current data: {(latest_season, latest_season_type)}")
 
     if latest_season is None:
         batch_start_season, batch_start_type = config.START_SEASON, config.SEASON_TYPES[0]
 
     else:
-        games_data = _truncate(games_data, latest_season, latest_season_type)
+        _truncate_games_table(games_db_conn, latest_season, latest_season_type)
         batch_start_season, batch_start_type = latest_season, latest_season_type
 
     logging.info(f"Starting batch at {(batch_start_season, batch_start_type)}...")
@@ -218,16 +235,13 @@ def run():
     batches = _get_seasons_grid(batch_start_season, batch_start_type)
     for batch in batches:
         season, season_type = batch
-        logging.info(f"Extracting data for {season}-{season_type}...")
+        logging.info(f"Starting new batch: extracting data for {season}-{season_type}...")
         batch_data = _extract_games_data(season, season_type)
-        logging.info(f"Data extracted. Appending {batch_data.shape[0]} rows...")
-        games_data = pd.concat([games_data, batch_data])
+        logging.info(f"Data extracted. Loading {batch_data.shape[0]} rows...")
+        etl_tools.load_to_db(
+            games_db_conn,
+            'games',
+            batch_data,
+        )
 
-    _data_integrity_check(games_data)
-    etl_tools.load_to_csv(
-        games_data,
-        config.GAMES_CSV_PATH,
-        sort_by='game_id',
-        sort_order='asc'
-    )
     logging.info("Pipeline completed.")
