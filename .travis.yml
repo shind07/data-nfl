@@ -7,13 +7,11 @@ services:
   - docker
 install:
   - pip install -r requirements.txt  # needed for tests
-before_install:
-  - make pull-cache build
 jobs:
   include:
     - stage: check
       if: type = pull_request
-      script: make lint test
+      script: make pull-cache lint test
     - stage: deploy
       if: type != pull_request and branch = master
-      script: make push
+      script: make pull-cache build push
