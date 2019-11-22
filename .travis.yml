@@ -6,7 +6,6 @@ cache: pip
 services:
   - docker
 before_install:
-  - docker login
   - docker pull scottyhind/data-nfl-pipeline:build-cache
 jobs:
   include:
