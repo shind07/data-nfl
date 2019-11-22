@@ -5,8 +5,8 @@ python:
 cache: pip
 services:
   - docker
-before_install:
-  - docker pull scottyhind/data-nfl-pipeline:build-cache
+install:
+  - pip install -r requirements.txt  # needed for tests
 jobs:
   include:
     - stage: check
