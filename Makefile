@@ -11,6 +11,12 @@ build:
 		-t $(IMAGE_NAME):latest \
 		-t $(IMAGE_NAME):$(IMAGE_TAG) .
 
+.PHONY: cleanup
+cleanup:
+	docker image prune
+	docker rm -v $(docker ps -a -q -f status=exited)
+	docker image prune
+
 .PHONY: db-shell
 db-shell:
 	docker-compose up -d --build
