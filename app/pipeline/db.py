@@ -12,12 +12,12 @@ def connect_to_db():
     Example usage:
         conn_str = db.get_connection_string()
         conn = db.connect_to_db(conn_str)
-        results = conn.execute('select * from database')
+        results = conn.execute('select col1, col2 from database')
 
-    :param connection_string: [description]
-    :type connection_string: [type]
-    :return: [description]
-    :rtype: [type]
+    :param connection_string: database connection string
+    :type connection_string: str
+    :return: sqlalchemy database engine
+    :rtype: sqlalchemy.engine.base.Engine | sqlalchemy.engine.base.Connection
     """
     connection_string = _get_connection_string()
     return db.create_engine(connection_string)
