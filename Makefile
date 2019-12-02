@@ -9,7 +9,7 @@ build:
 		--cache-from $(IMAGE_NAME):build-cache \
 		--cache-from $(IMAGE_NAME):latest \
 		-t $(IMAGE_NAME):latest \
-		-t $(IMAGE_NAME):$(IMAGE_TAG) .
+		-t $(IMAGE_NAME):$(IMAGE_TAG) ./app
 
 .PHONY: cleanup
 cleanup:
@@ -48,6 +48,11 @@ deploy: push
 	docker tag $(IMAGE_NAME):latest $(IMAGE_NAME):$(IMAGE_TAG) 
 	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
 
+.PHONY: run-app
+run-app:
+	docker-compose up -d --build
+	docker-compose logs -f -t >> app.log
+
 .PHONY: run-pipeline
 run-pipeline:
 	@echo "running $(IMAGE_NAME) container..."
@@ -58,7 +63,7 @@ run-pipeline:
 
 .PHONY: shell
 shell:
-	docker run -d -v $(PWD)/data:/app/data  --name $(RUNNING_CONTAINER_NAME) $(IMAGE_NAME)
+	docker run -d -v $(PWD)/app/data:/app/data --name $(RUNNING_CONTAINER_NAME) $(IMAGE_NAME) sleep infinity
 	docker exec -it $(RUNNING_CONTAINER_NAME) bash
 	docker stop $(RUNNING_CONTAINER_NAME)
 	docker rm $(RUNNING_CONTAINER_NAME)

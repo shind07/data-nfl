@@ -36,11 +36,14 @@ RUN pip3 install -r tmp/requirements.txt
 COPY bin/wait-for-port /usr/local/bin
 RUN chmod +x /usr/local/bin/wait-for-port
 
+COPY api app/api
 COPY pipeline /app/pipeline
 COPY nflscrapr /app/nflscrapr
 COPY tests app/tests
 
+COPY *.py app/
+
 WORKDIR /app
 
 ENTRYPOINT [ ]
-CMD [ "sleep", "infinity" ]
+CMD [ "python3", "main.py" ]
