@@ -11,6 +11,10 @@ build:
 		-t $(IMAGE_NAME):latest \
 		-t $(IMAGE_NAME):$(IMAGE_TAG) ./app
 
+.PHONY: up
+up:
+	docker-compose up -d --build
+
 .PHONY: cleanup
 cleanup:
 	docker image prune
@@ -48,25 +52,29 @@ deploy: push
 	docker tag $(IMAGE_NAME):latest $(IMAGE_NAME):$(IMAGE_TAG) 
 	docker push $(IMAGE_NAME):$(IMAGE_TAG) 
 
+.PHONY: migrate
+migrate: up
+	@echo migrating with message $(message)
+	docker exec data-nfl-pipeline-app wait-for-port postgres
+	docker exec data-nfl-pipeline-app alembic revision --autogenerate -m $(message)
+
 .PHONY: run-app
-run-app:
-	docker-compose up -d --build
+run-app: up
 	docker-compose logs -f -t >> app.log
 
 .PHONY: run-pipeline
-run-pipeline:
+run-pipeline: up
 	@echo "running $(IMAGE_NAME) container..."
-	docker-compose up -d --build
 	docker exec data-nfl-pipeline-app wait-for-port postgres
 	docker exec data-nfl-pipeline-app python3 -m pipeline
 	docker-compose down
 
 .PHONY: shell
 shell:
-	docker run -d -v $(PWD)/app/data:/app/data --name $(RUNNING_CONTAINER_NAME) $(IMAGE_NAME) sleep infinity
-	docker exec -it $(RUNNING_CONTAINER_NAME) bash
-	docker stop $(RUNNING_CONTAINER_NAME)
-	docker rm $(RUNNING_CONTAINER_NAME)
+	docker-compose up -d --build
+	docker exec data-nfl-pipeline-app wait-for-port postgres
+	docker exec -it data-nfl-pipeline-app bash
+	docker-compose down
 
 .PHONY: test
 test: build
