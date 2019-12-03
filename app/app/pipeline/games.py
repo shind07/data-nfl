@@ -13,9 +13,9 @@ import logging
 
 import pandas as pd
 
+import db
 from . import (
     config,
-    db,
     etl_tools,
     nflscrapr
 )
@@ -213,7 +213,7 @@ def run():
     Runs the workflow for extracting and loading games data.
     - Finds the starting point for extracting new data
     - Extracts new data using the nflscrapr module
-    - Saves data into csv
+    - Loads to database
     """
     games_db_conn = db.connect_to_db()
     games_query = "SELECT * FROM GAMES"
