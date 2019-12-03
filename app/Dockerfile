@@ -37,6 +37,8 @@ COPY bin/wait-for-port /usr/local/bin
 RUN chmod +x /usr/local/bin/wait-for-port
 
 COPY ./app ./app
+COPY alembic.ini ./app
+COPY alembic ./app/alembic
 
 WORKDIR /app
 
