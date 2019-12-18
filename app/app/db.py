@@ -3,7 +3,7 @@ import sqlalchemy as sa
 import config
 
 
-def connect_to_db():
+def get_db_eng():
     """Connect to a db with the given connection string
 
     Example usage:

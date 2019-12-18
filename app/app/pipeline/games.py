@@ -215,7 +215,7 @@ def run():
     - Extracts new data using the nflscrapr module
     - Loads to database
     """
-    games_db_conn = db.connect_to_db()
+    games_db_conn = db.get_db_eng()
     games_query = "SELECT * FROM GAMES"
     games_data = etl_tools.extract_from_db(games_db_conn, games_query)
     _data_integrity_check(games_data)
