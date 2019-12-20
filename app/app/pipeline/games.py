@@ -6,8 +6,6 @@ LOGIC:
 NOTE:
 - nflscrapr API takes weeks as a vector, so we just load one season at a time
 
-TODO:
-- add README
 """
 import logging
 
@@ -170,7 +168,7 @@ def _get_seasons_grid(start_season, start_season_type):
     :return: list of (season, season type) tuples
     :rtype: list of tuples
     """
-    if start_season not in list(range(config.START_SEASON, config.CURRENT_SEASON+1)):
+    if start_season not in list(range(config.START_SEASON, config.CURRENT_SEASON + 1)):
         raise ValueError(f"Start season of {start_season} not valid.")
 
     if start_season_type not in config.SEASON_TYPES:
@@ -190,7 +188,7 @@ def _get_seasons_grid(start_season, start_season_type):
 
 
 def _extract_games_data(season, season_type):
-    """Runs the nflscrapr docker container for the given season and type
+    """Runs the nflscrapr R script for the given season and type
 
     :param season: year of season
     :type season: int
@@ -215,7 +213,7 @@ def run():
     - Extracts new data using the nflscrapr module
     - Loads to database
     """
-    games_db_conn = db.connect_to_db()
+    games_db_conn = db.get_db_eng()
     games_query = "SELECT * FROM GAMES"
     games_data = etl_tools.extract_from_db(games_db_conn, games_query)
     _data_integrity_check(games_data)

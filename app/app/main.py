@@ -1,3 +1,8 @@
+from importlib import import_module
+import logging
+import os
+import sys
+
 from flask import (
     abort,
     Flask,
@@ -5,10 +10,6 @@ from flask import (
     jsonify,
     request
 )
-from importlib import import_module
-import logging
-import os
-import sys
 
 import db
 import config
@@ -21,7 +22,7 @@ app = Flask(__name__)
 def get_db():
     """Get global connection to the db."""
     if 'db' not in g:
-        g.db = db.connect_to_db()
+        g.db = db.get_db_eng()
     return g.db
 
 

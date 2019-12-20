@@ -3,3 +3,4 @@
 */data/*
 *.log
 .vscode
+.DS_store

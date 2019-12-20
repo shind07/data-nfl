@@ -27,7 +27,7 @@ def extract_from_csv(csv_path):
     if not csv_path.endswith(".csv"):
         raise ValueError(f"File {csv_path} is not a .csv file!")
 
-    logging.info(f'Loading games data from {csv_path}...')
+    logging.info(f'Loading csv data from {csv_path}...')
     return pd.read_csv(csv_path)
 
 
