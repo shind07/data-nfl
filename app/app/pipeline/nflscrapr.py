@@ -27,7 +27,7 @@ def run(job, **kwargs):
     try:
         logging.info(f"Running R subprocess with command {command}...")
         output = subprocess.check_output(command).decode()
-        logging.info(f"command ran successfully with output:\n{output}")
+        logging.info(f"Command ran successfully with output:\n{output}")
     except subprocess.CalledProcessError as e:
         logging.info(e.output)
         sys.exit(1)
@@ -42,9 +42,9 @@ def _get_command(job, **kwargs):
     :rtype: list
     """
     command_map = {
-        'games': _get_games_command
+        "games": _games_command,
+        "play_by_play": _play_by_play_command
     }
-
     if job not in command_map:
         raise ValueError(f"{job} job doesn't have an associated command.")
 
@@ -53,7 +53,7 @@ def _get_command(job, **kwargs):
     return command
 
 
-def _get_games_command(**kwargs):
+def _games_command(**kwargs):
     """Formats the command to run the games nflscrapr job.
 
     :return: the bash command to run
@@ -71,5 +71,23 @@ def _get_games_command(**kwargs):
         f"--year={kwargs.get('season')}",
         f"--type={kwargs.get('season_type')}",
         f"--file={config.GAMES_DUMP_CSV_PATH}"
+    ]
+    return command
+
+
+def _play_by_play_command(**kwargs):
+    """Formats the command to run the play_by_play nflscrapr job.
+
+    :return: the bash command to run
+    :rtype: list
+    """
+    if "game_id" not in kwargs:
+        raise ValueError("'game_id' arg missing from kwargs!")
+
+    command = [
+        'Rscript',
+        f"{config.NFLSCRAPR_JOBS_PATH}/play_by_play.r",
+        f"--game={kwargs.get('game_id')}",
+        f"--file={config.PLAY_BY_PLAY_DUMP_CSV_PATH}"
     ]
     return command
