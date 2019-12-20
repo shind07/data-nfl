@@ -28,18 +28,16 @@ main <- function() {
     }
 
     if (is.null(args$file)) {
-        stop("game type argument not supplied.")
+        stop("file name argument not supplied.")
     }
 
     year <- args$year
     game_type <- args$type  
     csv_name <- args$file
-    # Get games for week
+
+    # Extract and dump data
     games <- scrape_game_ids(year, type=game_type)
-
-    #write.table(games, sep=",", file=csv_name, col.names=!file.exists(csv_name), row.names=FALSE, append=file.exists(csv_name))
     write.table(games, sep=",", file=csv_name, col.names=TRUE, row.names=FALSE, append=FALSE)
-
 }
 
 if(!interactive()) {
